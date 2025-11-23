@@ -1,57 +1,34 @@
-import Link from "next/link";
+// app/dashboard/page.tsx
 
-export default function Home() {
+export default function DashboardHome() {
     return (
-        <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
-            <div className="w-full max-w-3xl rounded-2xl bg-white p-10 shadow-sm">
-                {/* 상단 텍스트 */}
-                <div className="mb-10 space-y-3">
-                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500">
-                        GROWLOG
-                    </p>
-                    <h1 className="text-3xl font-semibold leading-snug text-zinc-900">
-                        감정 · 회고 · 할 일을 한 곳에서 관리하는
-                        <br />
-                        <span className="text-indigo-600">자기관리 로그북</span>
-                    </h1>
-                    <p className="text-sm text-zinc-600">
-                        오늘의 기분을 기록하고, 하루를 돌아보고, 할 일을 정리하세요.
-                        Growlog가 꾸준한 성장 루틴을 도와줍니다.
+        <section className="space-y-4">
+            <h2 className="text-2xl font-semibold text-zinc-900">오늘 요약</h2>
+            <p className="text-sm text-zinc-600">
+                오늘의 감정, 회고, 할 일 진행 상황을 한눈에 볼 수 있는 대시보드입니다.
+                (이 칸에는 나중에 /daily API로 불러온 요약 카드들이 들어올 예정이에요.)
+            </p>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                    <h3 className="text-sm font-semibold text-zinc-800">오늘 할 일</h3>
+                    <p className="mt-2 text-xs text-zinc-500">
+                        /dashboard/todos 에서 할 일을 추가하면 여기에서 진행률을 보여줄 거예요.
                     </p>
                 </div>
-
-                {/* 버튼 영역 */}
-                <div className="flex flex-col gap-3 sm:flex-row">
-                    <Link
-                        href="/auth/login"
-                        className="flex-1 rounded-full bg-zinc-900 px-4 py-3 text-center text-sm font-medium text-zinc-50 hover:bg-zinc-800"
-                    >
-                        로그인하기
-                    </Link>
-                    <Link
-                        href="/auth/register"
-                        className="flex-1 rounded-full border border-zinc-200 px-4 py-3 text-center text-sm font-medium text-zinc-800 hover:bg-zinc-100"
-                    >
-                        처음이에요 · 회원가입
-                    </Link>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                    <h3 className="text-sm font-semibold text-zinc-800">오늘 감정</h3>
+                    <p className="mt-2 text-xs text-zinc-500">
+                        /dashboard/emotions 에서 기록한 오늘의 감정을 요약해서 보여줄 예정이에요.
+                    </p>
                 </div>
-
-                {/* 하단 설명 */}
-                <div className="mt-10 grid gap-4 text-xs text-zinc-500 sm:grid-cols-3">
-                    <div className="space-y-1">
-                        <p className="font-semibold text-zinc-800">감정 기록</p>
-                        <p>이모지와 한 줄 메모로 오늘의 기분을 남겨요.</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="font-semibold text-zinc-800">회고</p>
-                        <p>하루를 돌아보며 잘한 점과 아쉬운 점을 정리해요.</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="font-semibold text-zinc-800">할 일 & 통계</p>
-                        <p>달성률과 감정 패턴을 한 눈에 확인해요.</p>
-                    </div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                    <h3 className="text-sm font-semibold text-zinc-800">오늘 회고</h3>
+                    <p className="mt-2 text-xs text-zinc-500">
+                        /dashboard/reflections 에서 작성한 회고를 요약해서 보여줄 예정이에요.
+                    </p>
                 </div>
             </div>
-        </main>
+        </section>
     );
 }

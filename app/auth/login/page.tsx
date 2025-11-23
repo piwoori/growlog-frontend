@@ -2,15 +2,39 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        // TODO: 여기서 백엔드 POST /auth/login 붙일 예정
-        console.log("login try:", { email, password });
+
+        try {
+            const res = await api.post("/auth/login", {
+                email,
+                password,
+            });
+
+            // 백엔드 Swagger에 token 으로 명시되어 있었음
+            const token = res.data?.token;
+
+            if (!token) {
+                alert("로그인 응답에 토큰이 없습니다.");
+                return;
+            }
+
+            // 토큰 저장
+            localStorage.setItem("accessToken", token);
+
+            alert("로그인 성공!");
+            // 대시보드로 이동
+            window.location.href = "/dashboard";
+        } catch (err: any) {
+            console.log("로그인 에러:", err.response?.status, err.response?.data);
+            alert(err.response?.data?.message || "로그인 실패");
+        }
     };
 
     return (

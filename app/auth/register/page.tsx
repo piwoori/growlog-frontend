@@ -2,16 +2,29 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 export default function RegisterPage() {
     const [nickname, setNickname] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        // TODO: 여기서 백엔드 POST /auth/register 붙일 예정
-        console.log("register try:", { nickname, email, password });
+
+        try {
+            const res = await api.post("/auth/signup", {
+                nickname,
+                email,
+                password,
+            });
+
+            alert("회원가입 완료! 이제 로그인하세요.");
+            window.location.href = "/auth/login";
+        } catch (err: any) {
+            console.log("회원가입 에러:", err.response?.status, err.response?.data);
+            alert(err.response?.data?.message || "회원가입 실패");
+        }
     };
 
     return (
