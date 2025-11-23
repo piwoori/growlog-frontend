@@ -54,19 +54,34 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <aside className="w-60 border-r border-zinc-200 bg-white px-4 py-6">
                 <h1 className="mb-8 text-xl font-semibold text-zinc-900">Growlog</h1>
                 <nav className="flex flex-col gap-2 text-sm">
-                    <Link href="/dashboard" className="rounded-md px-3 py-2 hover:bg-zinc-100">
+                    <Link
+                        href="/dashboard"
+                        className="rounded-md px-3 py-2 hover:bg-zinc-100"
+                    >
                         오늘 요약
                     </Link>
-                    <Link href="/dashboard/todos" className="rounded-md px-3 py-2 hover:bg-zinc-100">
+                    <Link
+                        href="/dashboard/todos"
+                        className="rounded-md px-3 py-2 hover:bg-zinc-100"
+                    >
                         할 일
                     </Link>
-                    <Link href="/dashboard/reflections" className="rounded-md px-3 py-2 hover:bg-zinc-100">
+                    <Link
+                        href="/dashboard/reflections"
+                        className="rounded-md px-3 py-2 hover:bg-zinc-100"
+                    >
                         회고
                     </Link>
-                    <Link href="/dashboard/emotions" className="rounded-md px-3 py-2 hover:bg-zinc-100">
+                    <Link
+                        href="/dashboard/emotions"
+                        className="rounded-md px-3 py-2 hover:bg-zinc-100"
+                    >
                         감정
                     </Link>
-                    <Link href="/dashboard/stats" className="rounded-md px-3 py-2 hover:bg-zinc-100">
+                    <Link
+                        href="/dashboard/stats"
+                        className="rounded-md px-3 py-2 hover:bg-zinc-100"
+                    >
                         통계
                     </Link>
                 </nav>
@@ -80,14 +95,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <p className="text-sm text-zinc-500">오늘도 성장하는 중 🌱</p>
                         {user && (
                             <p className="text-lg font-semibold text-zinc-900">
-                                {user.nickname}님, 환영합니다.
+                                {(user.nickname || user.email) + "님, 환영합니다."}
                             </p>
                         )}
                     </div>
                     <button
                         className="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-600 hover:bg-zinc-100"
                         onClick={() => {
-                            localStorage.removeItem("accessToken");
+                            if (typeof window !== "undefined") {
+                                localStorage.removeItem("accessToken");
+                            }
                             router.replace("/auth/login");
                         }}
                     >
