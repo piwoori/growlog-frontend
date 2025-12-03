@@ -1,5 +1,6 @@
 "use client";
 
+import { PageTitle } from "@/components/layout/PageTitle";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 

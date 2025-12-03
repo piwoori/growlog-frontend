@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
+import { PageTitle } from "@/components/layout/PageTitle";
+import { Spinner } from "@/components/ui/Spinner";
+import { ErrorState } from "@/components/ui/ErrorState";
+
 interface Emotion {
     id: number;
     emoji: string;
@@ -20,11 +24,14 @@ export default function EmotionsPage() {
     const [note, setNote] = useState("");
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [currentEmotion, setCurrentEmotion] = useState<Emotion | null>(null);
 
     // 특정 날짜 감정 조회
     const fetchEmotion = async (targetDate: string) => {
         setLoading(true);
+        setError(null);
+
         try {
             const res = await api.get("/emotions", {
                 params: { date: targetDate },
@@ -42,12 +49,18 @@ export default function EmotionsPage() {
             setSelectedEmoji(emotion?.emoji ?? null);
             setNote((emotion as any)?.note ?? "");
         } catch (err: any) {
-            console.error("감정 조회 실패:", err);
+            console.error("감정 조회 실패:", err?.response?.data || err);
 
             // 이 날짜에 감정이 없거나 조회 에러일 경우 상태 초기화
             setCurrentEmotion(null);
             setSelectedEmoji(null);
             setNote("");
+
+            const msg =
+                err?.response?.data?.message ||
+                err?.response?.data?.error ||
+                "감정을 불러오지 못했어요.";
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -82,8 +95,8 @@ export default function EmotionsPage() {
             // 다시 조회해서 상태 동기화
             fetchEmotion(date);
         } catch (err: any) {
-            console.error("감정 저장 실패:", err);
-            alert(err.response?.data?.message || "감정 저장에 실패했습니다.");
+            console.error("감정 저장 실패:", err?.response?.data || err);
+            alert(err?.response?.data?.message || "감정 저장에 실패했습니다.");
         } finally {
             setSaving(false);
         }
@@ -95,15 +108,16 @@ export default function EmotionsPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [date]);
 
+    const today = getTodayString();
+
     return (
         <div className="space-y-6">
+            {/* 상단 타이틀 + 날짜 선택 */}
             <div className="flex items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-semibold text-zinc-900">감정 기록</h2>
-                    <p className="text-sm text-zinc-600">
-                        하루에 하나의 감정을 이모지로 기록하고, 짧은 메모로 남길 수 있어요.
-                    </p>
-                </div>
+                <PageTitle
+                    title="감정 기록"
+                    description="하루에 하나의 감정을 이모지로 기록하고, 짧은 메모로 남길 수 있어요."
+                />
 
                 <div className="flex items-center gap-2 text-sm">
                     <span className="text-zinc-500">날짜</span>
@@ -116,72 +130,79 @@ export default function EmotionsPage() {
                 </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-6">
-                {/* 이모지 선택 영역 */}
-                <div className="space-y-2">
-                    <p className="text-sm font-medium text-zinc-800">
-                        {date === getTodayString() ? "오늘의 감정" : "선택한 날짜의 감정"}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                        {EMOJIS.map((emoji) => (
+            <div className="space-y-6 rounded-xl border border-zinc-200 bg-white p-5">
+                {/* 공통 에러 영역 */}
+                {error && <ErrorState message={error} />}
+
+                {/* 로딩 상태 */}
+                {loading ? (
+                    <Spinner />
+                ) : (
+                    <>
+                        {/* 이모지 선택 영역 */}
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium text-zinc-800">
+                                {date === today ? "오늘의 감정" : "선택한 날짜의 감정"}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {EMOJIS.map((emoji) => (
+                                    <button
+                                        key={emoji}
+                                        type="button"
+                                        onClick={() => setSelectedEmoji(emoji)}
+                                        className={`flex h-10 w-10 items-center justify-center rounded-full border text-xl transition ${
+                                            selectedEmoji === emoji
+                                                ? "border-indigo-500 bg-indigo-50"
+                                                : "border-zinc-200 bg-white hover:bg-zinc-50"
+                                        }`}
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {currentEmotion ? (
+                                <p className="mt-1 text-xs text-zinc-500">
+                                    이 날의 감정은 이미 기록되어 있어요. 이모지나 메모를 수정할 수 있어요.
+                                </p>
+                            ) : (
+                                <p className="mt-1 text-xs text-zinc-500">
+                                    아직 감정이 기록되지 않았어요. 오늘의 기분을 골라보세요.
+                                </p>
+                            )}
+                        </div>
+
+                        {/* 메모 입력 */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-zinc-800">
+                                짧은 메모 (선택)
+                            </label>
+                            <textarea
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                rows={3}
+                                placeholder="오늘의 기분이나 이유를 메모로 남겨보세요."
+                                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+
+                        {/* 저장 버튼 */}
+                        <div className="flex justify-end">
                             <button
-                                key={emoji}
                                 type="button"
-                                onClick={() => setSelectedEmoji(emoji)}
-                                className={`flex h-10 w-10 items-center justify-center rounded-full border text-xl transition ${
-                                    selectedEmoji === emoji
-                                        ? "border-indigo-500 bg-indigo-50"
-                                        : "border-zinc-200 bg-white hover:bg-zinc-50"
-                                }`}
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {emoji}
+                                {saving
+                                    ? "저장 중..."
+                                    : currentEmotion
+                                        ? "감정 수정하기"
+                                        : "감정 기록하기"}
                             </button>
-                        ))}
-                    </div>
-                    {loading ? (
-                        <p className="text-xs text-zinc-500 mt-1">
-                            감정을 불러오는 중입니다...
-                        </p>
-                    ) : currentEmotion ? (
-                        <p className="text-xs text-zinc-500 mt-1">
-                            이 날의 감정은 이미 기록되어 있어요. 이모지나 메모를 수정할 수 있어요.
-                        </p>
-                    ) : (
-                        <p className="text-xs text-zinc-500 mt-1">
-                            아직 감정이 기록되지 않았어요. 오늘의 기분을 골라보세요.
-                        </p>
-                    )}
-                </div>
-
-                {/* 메모 입력 */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-zinc-800">
-                        짧은 메모 (선택)
-                    </label>
-                    <textarea
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        rows={3}
-                        placeholder="오늘의 기분이나 이유를 메모로 남겨보세요."
-                        className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                </div>
-
-                {/* 저장 버튼 */}
-                <div className="flex justify-end">
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        {saving
-                            ? "저장 중..."
-                            : currentEmotion
-                                ? "감정 수정하기"
-                                : "감정 기록하기"}
-                    </button>
-                </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

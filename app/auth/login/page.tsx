@@ -18,6 +18,17 @@ export default function LoginPage() {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
+
+        // 프론트 단 기본 검증 문구 통일
+        if (!email.trim()) {
+            setError("이메일을 입력해 주세요.");
+            return;
+        }
+        if (!password.trim()) {
+            setError("비밀번호를 입력해 주세요.");
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -25,7 +36,7 @@ export default function LoginPage() {
 
             const token = res.data?.token; // Swagger에서 token으로 명시됨
             if (!token) {
-                setError("로그인 응답에 토큰이 없습니다.");
+                setError("로그인에 실패했어요. 잠시 후 다시 시도해 주세요.");
                 return;
             }
 
@@ -35,7 +46,8 @@ export default function LoginPage() {
             console.error("로그인 에러:", err.response?.status, err.response?.data);
             setError(
                 err.response?.data?.message ||
-                "이메일 또는 비밀번호를 다시 확인해주세요."
+                err.response?.data?.error ||
+                "이메일 또는 비밀번호를 다시 확인해 주세요."
             );
         } finally {
             setIsLoading(false);
@@ -46,7 +58,7 @@ export default function LoginPage() {
         <>
             <h2 className="mb-1 text-lg font-semibold text-zinc-900">로그인</h2>
             <p className="mb-4 text-xs text-zinc-500">
-                Growlog 계정으로 로그인해 할 일·감정·회고를 관리하세요.
+                Growlog 계정으로 로그인해 할 일·감정·회고를 관리해 보세요.
             </p>
 
             {error && (
@@ -76,7 +88,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        placeholder="8자 이상 입력"
+                        placeholder="8자 이상 입력해 주세요."
                     />
                 </div>
 

@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
+import { PageTitle } from "@/components/layout/PageTitle";
+import { Spinner } from "@/components/ui/Spinner";
+import { ErrorState } from "@/components/ui/ErrorState";
+
 interface Todo {
     id: number;
     content: string;
@@ -13,6 +17,7 @@ interface Todo {
 export default function TodosPage() {
     const [todos, setTodos] = useState<Todo[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const [newContent, setNewContent] = useState("");
     const [adding, setAdding] = useState(false);
@@ -22,6 +27,7 @@ export default function TodosPage() {
     // ✅ 할 일 목록 조회
     const fetchTodos = async () => {
         setLoading(true);
+        setError(null);
         try {
             const res = await api.get("/todos");
             const data = res.data;
@@ -35,9 +41,13 @@ export default function TodosPage() {
             }
 
             setTodos(list);
-        } catch (error) {
-            console.error("할 일 목록 조회 실패:", error);
-            alert("할 일 목록을 불러오지 못했어요.");
+        } catch (err: any) {
+            console.error("할 일 목록 조회 실패:", err?.response?.data || err);
+            const msg =
+                err?.response?.data?.message ||
+                err?.response?.data?.error ||
+                "할 일 목록을 불러오지 못했어요.";
+            setError(msg); // 👈 에러는 상단 ErrorState로 보여줌
         } finally {
             setLoading(false);
         }
@@ -57,7 +67,7 @@ export default function TodosPage() {
         setAdding(true);
         try {
             await api.post("/todos", {
-                content: newContent.trim(), // 🔥 백엔드 스펙: content 필수
+                content: newContent.trim(),
             });
 
             setNewContent("");
@@ -75,11 +85,10 @@ export default function TodosPage() {
         }
     };
 
-    // ✅ 완료 여부 토글 (isDone) – 토글 전용 라우트 호출
+    // ✅ 완료 여부 토글
     const handleToggleComplete = async (todo: Todo) => {
         setUpdatingIds((prev) => [...prev, todo.id]);
         try {
-            // 🔥 토글 전용 엔드포인트에 맞춰서 수정
             await api.patch(`/todos/${todo.id}/toggle`);
 
             // 낙관적 업데이트
@@ -128,14 +137,12 @@ export default function TodosPage() {
 
     return (
         <div className="space-y-6">
-            {/* 페이지 타이틀 + 요약 */}
+            {/* 상단 타이틀 + 요약 카드 */}
             <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-semibold text-zinc-900">할 일</h2>
-                    <p className="text-sm text-zinc-600">
-                        오늘 해야 할 일들을 적어두고, 완료한 일은 체크해 보세요.
-                    </p>
-                </div>
+                <PageTitle
+                    title="할 일"
+                    description="오늘 해야 할 일들을 적어두고, 완료한 일은 체크해 보세요."
+                />
 
                 <div className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-right">
                     <p className="text-xs text-zinc-500">오늘의 진행 상황</p>
@@ -148,7 +155,7 @@ export default function TodosPage() {
             </div>
 
             {/* 새 할 일 입력 */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-3">
+            <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
                 <p className="text-sm font-medium text-zinc-800">새 할 일 추가</p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <input
@@ -172,12 +179,16 @@ export default function TodosPage() {
                 </p>
             </div>
 
-            {/* 목록 */}
+            {/* 할 일 목록 */}
             <div className="rounded-xl border border-zinc-200 bg-white p-4">
                 <p className="mb-3 text-sm font-medium text-zinc-800">할 일 목록</p>
 
+                {/* 에러 공통 위치 */}
+                {error && <ErrorState message={error} />}
+
+                {/* 로딩 상태 */}
                 {loading ? (
-                    <p className="text-sm text-zinc-500">불러오는 중입니다...</p>
+                    <Spinner />
                 ) : todos.length === 0 ? (
                     <p className="text-sm text-zinc-500">
                         아직 등록된 할 일이 없어요. 위에서 첫 할 일을 만들어 보세요.

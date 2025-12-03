@@ -10,7 +10,7 @@ export default function RegisterPage() {
     const router = useRouter();
 
     const [nickname, setNickname] = useState("");
-    const [email, setEmail]       = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const [error, setError] = useState<string | null>(null);
@@ -19,20 +19,37 @@ export default function RegisterPage() {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
+
+        // 프론트 단 기본 검증 문구 통일
+        if (!nickname.trim()) {
+            setError("닉네임을 입력해 주세요.");
+            return;
+        }
+        if (!email.trim()) {
+            setError("이메일을 입력해 주세요.");
+            return;
+        }
+        if (!password.trim()) {
+            setError("비밀번호를 입력해 주세요.");
+            return;
+        }
+
         setIsLoading(true);
 
         try {
             await api.post("/auth/signup", {
-                nickname,
-                email,
+                nickname: nickname.trim(),
+                email: email.trim(),
                 password,
             });
 
             router.push("/auth/login");
         } catch (err: any) {
-            setError(err.response?.data?.message ||
+            setError(
+                err.response?.data?.message ||
                 err.response?.data?.error ||
-                "회원가입에 실패했습니다.");
+                "회원가입에 실패했어요. 잠시 후 다시 시도해 주세요."
+            );
         } finally {
             setIsLoading(false);
         }
@@ -42,7 +59,7 @@ export default function RegisterPage() {
         <>
             <h2 className="mb-1 text-lg font-semibold text-zinc-900">회원가입</h2>
             <p className="mb-4 text-xs text-zinc-500">
-                Growlog 계정으로 할 일·감정·회고를 관리해보세요.
+                Growlog 계정을 만들고 할 일·감정·회고를 한 곳에서 관리해 보세요.
             </p>
 
             {error && (
@@ -58,9 +75,8 @@ export default function RegisterPage() {
                         type="text"
                         value={nickname}
                         onChange={(e) => setNickname(e.target.value)}
-                        className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none
-                       focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
-                        placeholder="피우리"
+                        className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                        placeholder="예: 피우리"
                         required
                     />
                 </div>
@@ -71,9 +87,8 @@ export default function RegisterPage() {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none
-                       focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
-                        placeholder="you@example.com"
+                        className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                        placeholder="example@growlog.me"
                         required
                     />
                 </div>
@@ -84,9 +99,8 @@ export default function RegisterPage() {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none
-                       focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
-                        placeholder="8자 이상"
+                        className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                        placeholder="8자 이상 입력해 주세요."
                         required
                     />
                 </div>
@@ -94,8 +108,7 @@ export default function RegisterPage() {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 w-full rounded-full bg-zinc-900 py-2.5 text-sm font-medium text-zinc-50
-                     hover:bg-zinc-800 disabled:opacity-60"
+                    className="mt-2 w-full rounded-full bg-zinc-900 py-2.5 text-sm font-medium text-zinc-50 hover:bg-zinc-800 disabled:opacity-60"
                 >
                     {isLoading ? "가입 중..." : "가입하기"}
                 </button>
