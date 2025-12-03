@@ -1,87 +1,103 @@
+// app/auth/login/page.tsx
 "use client";
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 
 export default function LoginPage() {
+    const router = useRouter();
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleSubmit = async (e: FormEvent) => {
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setError(null);
+        setIsLoading(true);
 
         try {
-            const res = await api.post("/auth/login", {
-                email,
-                password,
-            });
+            const res = await api.post("/auth/login", { email, password });
 
-            // 백엔드 Swagger에 token 으로 명시되어 있었음
-            const token = res.data?.token;
-
+            const token = res.data?.token; // Swagger에서 token으로 명시됨
             if (!token) {
-                alert("로그인 응답에 토큰이 없습니다.");
+                setError("로그인 응답에 토큰이 없습니다.");
                 return;
             }
 
-            // 토큰 저장
             localStorage.setItem("accessToken", token);
-
-            alert("로그인 성공!");
-            // 대시보드로 이동
-            window.location.href = "/dashboard";
+            router.push("/dashboard");
         } catch (err: any) {
-            console.log("로그인 에러:", err.response?.status, err.response?.data);
-            alert(err.response?.data?.message || "로그인 실패");
+            console.error("로그인 에러:", err.response?.status, err.response?.data);
+            setError(
+                err.response?.data?.message ||
+                "이메일 또는 비밀번호를 다시 확인해주세요."
+            );
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
-            <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
-                <h1 className="mb-6 text-2xl font-semibold text-zinc-900">로그인</h1>
+        <>
+            <h2 className="mb-1 text-lg font-semibold text-zinc-900">로그인</h2>
+            <p className="mb-4 text-xs text-zinc-500">
+                Growlog 계정으로 로그인해 할 일·감정·회고를 관리하세요.
+            </p>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-zinc-800">이메일</label>
-                        <input
-                            type="email"
-                            className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            placeholder="you@example.com"
-                        />
-                    </div>
+            {error && (
+                <div className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">
+                    {error}
+                </div>
+            )}
 
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-zinc-800">비밀번호</label>
-                        <input
-                            type="password"
-                            className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            placeholder="8자 이상"
-                        />
-                    </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1">
+                    <label className="text-sm font-medium text-zinc-800">이메일</label>
+                    <input
+                        type="email"
+                        className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        placeholder="example@growlog.me"
+                    />
+                </div>
 
-                    <button
-                        type="submit"
-                        className="mt-2 w-full rounded-full bg-zinc-900 py-2.5 text-sm font-medium text-zinc-50 hover:bg-zinc-800"
-                    >
-                        로그인
-                    </button>
-                </form>
+                <div className="space-y-1">
+                    <label className="text-sm font-medium text-zinc-800">비밀번호</label>
+                    <input
+                        type="password"
+                        className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        placeholder="8자 이상 입력"
+                    />
+                </div>
 
-                <p className="mt-4 text-center text-xs text-zinc-500">
-                    아직 계정이 없나요?{" "}
-                    <Link href="/auth/register" className="font-medium text-indigo-600">
-                        회원가입 하기
-                    </Link>
-                </p>
-            </div>
-        </main>
+                <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="mt-2 w-full rounded-full bg-zinc-900 py-2.5 text-sm font-medium text-zinc-50 hover:bg-zinc-800 disabled:opacity-60 disabled:hover:bg-zinc-900"
+                >
+                    {isLoading ? "로그인 중..." : "로그인"}
+                </button>
+            </form>
+
+            <p className="mt-4 text-center text-xs text-zinc-500">
+                아직 계정이 없나요?{" "}
+                <Link
+                    href="/auth/register"
+                    className="font-medium text-zinc-900 underline"
+                >
+                    회원가입 하기
+                </Link>
+            </p>
+        </>
     );
 }
