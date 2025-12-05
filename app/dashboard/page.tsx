@@ -1,8 +1,35 @@
 "use client";
 
-import { PageTitle } from "@/components/layout/PageTitle";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { PageTitle } from "@/components/layout/PageTitle";
+
+// 📊 Recharts
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    Tooltip,
+    ResponsiveContainer,
+    RadialBarChart,
+    RadialBar,
+    PolarAngleAxis,
+} from "recharts";
+
+interface EmotionStats {
+    [emoji: string]: number;
+}
+
+interface SummaryTodoStats {
+    total: number;
+    completed: number;
+    completionRate: number;
+}
+
+interface SummaryStats {
+    emotionStats: EmotionStats;
+    todoStats: SummaryTodoStats;
+}
 
 interface Emotion {
     id: number;
@@ -17,7 +44,8 @@ interface Reflection {
     date: string;
 }
 
-interface TodoStats {
+// 오늘 할 일 통계 응답 타입 (/todos/statistics)
+interface TodayTodoStats {
     total: number;
     completed: number;
     rate: number; // %
@@ -26,24 +54,47 @@ interface TodoStats {
 const getTodayString = () => new Date().toISOString().slice(0, 10);
 
 export default function DashboardHomePage() {
+    const [stats, setStats] = useState<SummaryStats | null>(null); // 주간 통계 (차트용)
+    const [loadingStats, setLoadingStats] = useState(false);
+
     const [emotion, setEmotion] = useState<Emotion | null>(null);
     const [reflection, setReflection] = useState<Reflection | null>(null);
-    const [todoStats, setTodoStats] = useState<TodoStats | null>(null);
+    const [todayTodoStats, setTodayTodoStats] = useState<TodayTodoStats | null>(
+        null
+    );
 
     const [loading, setLoading] = useState(true);
+
     const today = getTodayString();
 
+    // ✅ 통계(/stats/summary) 불러오기 - 주간 차트용 데이터
+    const fetchStats = async (targetDate: string) => {
+        try {
+            setLoadingStats(true);
+
+            const res = await api.get("/stats/summary", {
+                params: { date: targetDate, period: "weekly" },
+            });
+
+            setStats(res.data as SummaryStats);
+        } catch (err: any) {
+            console.error("통계 조회 실패:", err?.response?.data || err);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    // ✅ 오늘 감정 / 회고 / 할 일 요약 불러오기
     const loadSummary = async () => {
         setLoading(true);
         try {
-            // 1) 오늘 감정
             const [emotionRes, reflectionRes, todoStatsRes] = await Promise.all([
                 api.get("/emotions", { params: { date: today } }),
                 api.get("/reflections", { params: { date: today } }),
-                api.get("/todos/statistics"),
+                api.get("/todos/statistics", { params: { date: today } }),
             ]);
 
-            // 감정: { emotions: [...] }
+            // 감정: { emotions: [...] } or [...]
             const eData = emotionRes.data;
             let e: Emotion | null = null;
             if (Array.isArray(eData?.emotions)) {
@@ -55,7 +106,7 @@ export default function DashboardHomePage() {
             }
             setEmotion(e);
 
-            // 회고: 배열 / {reflections: [...] } / 단일 객체 방어
+            // 회고: { reflections: [...] } or [...]
             const rData = reflectionRes.data;
             let r: Reflection | null = null;
             if (Array.isArray(rData?.reflections)) {
@@ -70,8 +121,8 @@ export default function DashboardHomePage() {
             }
             setReflection(r);
 
-            // 할 일 통계: { total, completed, rate }
-            setTodoStats(todoStatsRes.data as TodoStats);
+            // 오늘 할 일 통계: { total, completed, rate }
+            setTodayTodoStats(todoStatsRes.data as TodayTodoStats);
         } catch (err) {
             console.error("오늘 요약 불러오기 실패:", err);
         } finally {
@@ -79,31 +130,47 @@ export default function DashboardHomePage() {
         }
     };
 
+    // 처음 진입 시 오늘 요약 + 통계 함께 호출
     useEffect(() => {
         loadSummary();
+        fetchStats(today);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return (
-        <div className="space-y-6">
-            <div>
-                <h2 className="text-2xl font-semibold text-zinc-900">오늘 요약</h2>
-                <p className="text-sm text-zinc-600">
-                    오늘의 감정, 회고, 할 일 진행 상황을 한 번에 볼 수 있어요.
-                </p>
-            </div>
+    // 📊 감정 통계 차트용 데이터 변환
+    const emotionChartData =
+        stats &&
+        Object.entries(stats.emotionStats).map(([emoji, count]) => ({
+            emoji,
+            count,
+        }));
 
+    // 📊 할 일 통계 (주간 평균 완료율)
+    const weeklyTodoRate = stats?.todoStats?.completionRate ?? 0;
+
+    return (
+        <div className="space-y-8">
+            {/* 상단 타이틀 */}
+            <PageTitle
+                title="오늘 요약"
+                description="오늘의 감정, 회고, 할 일 진행 상황을 한 번에 볼 수 있어요."
+            />
+
+            {/* 오늘 요약 카드 3개 */}
             {loading ? (
-                <p className="text-sm text-zinc-500">오늘 데이터를 불러오는 중입니다...</p>
+                <p className="text-sm text-zinc-500">
+                    오늘 데이터를 불러오는 중입니다...
+                </p>
             ) : (
                 <div className="grid gap-4 md:grid-cols-3">
                     {/* 감정 카드 */}
-                    <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-2">
+                    <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
                         <p className="text-xs font-medium text-zinc-500">오늘의 감정</p>
                         {emotion ? (
                             <>
                                 <p className="text-3xl">{emotion.emoji}</p>
                                 {emotion.note && (
-                                    <p className="text-xs text-zinc-600 break-words">
+                                    <p className="break-words text-xs text-zinc-600">
                                         {emotion.note}
                                     </p>
                                 )}
@@ -119,10 +186,10 @@ export default function DashboardHomePage() {
                     </div>
 
                     {/* 회고 카드 */}
-                    <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-2">
+                    <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
                         <p className="text-xs font-medium text-zinc-500">오늘의 회고</p>
                         {reflection ? (
-                            <p className="text-sm text-zinc-700 whitespace-pre-wrap break-words line-clamp-6">
+                            <p className="line-clamp-6 break-words whitespace-pre-wrap text-sm text-zinc-700">
                                 {reflection.content}
                             </p>
                         ) : (
@@ -136,25 +203,25 @@ export default function DashboardHomePage() {
                     </div>
 
                     {/* 할 일 카드 */}
-                    <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-2">
+                    <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
                         <p className="text-xs font-medium text-zinc-500">할 일 진행률</p>
-                        {todoStats ? (
+                        {todayTodoStats ? (
                             <>
                                 <p className="text-lg font-semibold text-zinc-900">
-                                    {todoStats.total === 0
+                                    {todayTodoStats.total === 0
                                         ? "등록된 할 일이 없어요."
-                                        : `${todoStats.total}개 중 ${todoStats.completed}개 완료`}
+                                        : `${todayTodoStats.total}개 중 ${todayTodoStats.completed}개 완료`}
                                 </p>
-                                {todoStats.total > 0 && (
+                                {todayTodoStats.total > 0 && (
                                     <div className="space-y-2">
                                         <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
                                             <div
                                                 className="h-full rounded-full bg-indigo-500 transition-all"
-                                                style={{ width: `${todoStats.rate}%` }}
+                                                style={{ width: `${todayTodoStats.rate}%` }}
                                             />
                                         </div>
                                         <p className="text-xs text-zinc-500">
-                                            오늘의 완료율 {todoStats.rate}%
+                                            오늘의 완료율 {todayTodoStats.rate}%
                                         </p>
                                     </div>
                                 )}
@@ -167,6 +234,100 @@ export default function DashboardHomePage() {
                     </div>
                 </div>
             )}
+
+            {/* ---------------- 통계 섹션 (이번 주 감정 & 할 일) ---------------- */}
+            <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-zinc-900">
+                        이번 주 통계
+                    </h3>
+                    <p className="text-xs text-zinc-500">
+                        최근 1주일 동안의 감정 패턴과 할 일 완료율이에요.
+                    </p>
+                </div>
+
+                {loadingStats ? (
+                    <p className="text-xs text-zinc-500">통계를 불러오는 중입니다...</p>
+                ) : !stats ? (
+                    <p className="text-xs text-zinc-500">
+                        아직 통계 데이터가 없어요. 감정과 할 일을 기록해 보세요.
+                    </p>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {/* 감정 빈도 차트 */}
+                        <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
+                            <p className="text-xs font-medium text-zinc-500">
+                                이번 주 감정 분포
+                            </p>
+                            {emotionChartData && emotionChartData.length > 0 ? (
+                                <div className="h-56">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={emotionChartData}>
+                                            <XAxis dataKey="emoji" />
+                                            <Tooltip
+                                                formatter={(value) => [`${value}회`, "기록 횟수"]}
+                                            />
+                                            <Bar
+                                                dataKey="count"
+                                                radius={[6, 6, 0, 0]}
+                                                // 색상은 기본 theme에 맡겨도 되지만, 인지성을 위해 한 번 지정
+                                                fill="#6366F1"
+                                            />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-zinc-500">
+                                    최근 일주일간 기록된 감정이 없어요.
+                                </p>
+                            )}
+                        </div>
+
+                        {/* 할 일 완료율 도넛 차트 */}
+                        <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
+                            <p className="text-xs font-medium text-zinc-500">
+                                이번 주 평균 할 일 완료율
+                            </p>
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="h-40 w-40">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <RadialBarChart
+                                            data={[{ name: "완료율", value: weeklyTodoRate }]}
+                                            innerRadius="70%"
+                                            outerRadius="100%"
+                                            startAngle={180}
+                                            endAngle={-180}
+                                        >
+                                            <PolarAngleAxis
+                                                type="number"
+                                                domain={[0, 100]}
+                                                dataKey="value"
+                                                tick={false}
+                                            />
+                                            <RadialBar
+                                                background
+                                                dataKey="value"
+                                                cornerRadius={10}
+                                                fill="#22C55E"
+                                            />
+                                        </RadialBarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="space-y-1 text-right text-xs text-zinc-600">
+                                    <p className="text-sm font-semibold text-zinc-900">
+                                        {weeklyTodoRate}% 완료
+                                    </p>
+                                    <p>이번 주 전체 할 일: {stats.todoStats.total}개</p>
+                                    <p>완료된 할 일: {stats.todoStats.completed}개</p>
+                                    <p className="text-[11px] text-zinc-500">
+                                        한 주 동안의 평균 완료율이에요.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

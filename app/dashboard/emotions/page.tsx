@@ -10,8 +10,10 @@ import { ErrorState } from "@/components/ui/ErrorState";
 interface Emotion {
     id: number;
     emoji: string;
-    note?: string | null; // Prisma 스키마에 따라 optional
+    note?: string | null; // ✅ 메모 필드
     date: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 const EMOJIS = ["😄", "🙂", "😐", "😢", "😡", "😴", "🤩"];
@@ -27,7 +29,7 @@ export default function EmotionsPage() {
     const [error, setError] = useState<string | null>(null);
     const [currentEmotion, setCurrentEmotion] = useState<Emotion | null>(null);
 
-    // 특정 날짜 감정 조회
+    // ✅ 특정 날짜 감정 조회
     const fetchEmotion = async (targetDate: string) => {
         setLoading(true);
         setError(null);
@@ -37,7 +39,6 @@ export default function EmotionsPage() {
                 params: { date: targetDate },
             });
 
-            // ✅ 백엔드 응답: { emotions: [...] }
             const list = res.data?.emotions;
             let emotion: Emotion | null = null;
 
@@ -47,11 +48,10 @@ export default function EmotionsPage() {
 
             setCurrentEmotion(emotion);
             setSelectedEmoji(emotion?.emoji ?? null);
-            setNote((emotion as any)?.note ?? "");
+            setNote(emotion?.note ?? ""); // ✅ DB note 값 반영
         } catch (err: any) {
             console.error("감정 조회 실패:", err?.response?.data || err);
 
-            // 이 날짜에 감정이 없거나 조회 에러일 경우 상태 초기화
             setCurrentEmotion(null);
             setSelectedEmoji(null);
             setNote("");
@@ -66,7 +66,7 @@ export default function EmotionsPage() {
         }
     };
 
-    // 감정 저장 (없으면 생성, 있으면 오늘 감정 수정)
+    // ✅ 감정 저장 (없으면 생성, 있으면 수정)
     const handleSave = async () => {
         if (!selectedEmoji) {
             alert("오늘의 감정을 이모지로 선택해주세요!");
@@ -76,18 +76,18 @@ export default function EmotionsPage() {
         setSaving(true);
         try {
             if (currentEmotion) {
-                // ✅ 오늘 감정 수정 (백엔드: emoji, text? 사용)
-                await api.patch("/emotions/today", {
+                // ✅ 기존 감정 수정: /emotions/:id + emoji, note
+                await api.patch(`/emotions/${currentEmotion.id}`, {
                     emoji: selectedEmoji,
-                    text: note, // note → text 로 전송 (AI 분석용 텍스트)
+                    note, // ✅ text → note
                 });
                 alert("오늘 감정을 수정했어요.");
             } else {
-                // ✅ 새 감정 생성 (백엔드: emoji, date, text? 사용)
+                // ✅ 새 감정 생성: /emotions + emoji, date, note
                 await api.post("/emotions", {
                     emoji: selectedEmoji,
                     date,
-                    text: note,
+                    note, // ✅ text → note
                 });
                 alert("오늘 감정을 기록했어요.");
             }
