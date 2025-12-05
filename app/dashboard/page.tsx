@@ -14,6 +14,7 @@ import {
     RadialBarChart,
     RadialBar,
     PolarAngleAxis,
+    Cell,              // ✅ 추가
 } from "recharts";
 
 interface EmotionStats {
@@ -38,10 +39,16 @@ interface Emotion {
     date: string;
 
     // ✅ AI 감정 분석 결과
-    aiLabel?: string | null;
     positive?: number | null;
     neutral?: number | null;
     negative?: number | null;
+    aiLabel?: string | null;
+    aiModel?: string | null;
+    aiVersion?: string | null;
+
+    aiAdvice?: string | null;
+    aiAdviceModel?: string | null;
+    aiAdviceSource?: string | null;
 }
 
 interface Reflection {
@@ -58,6 +65,17 @@ interface TodayTodoStats {
 }
 
 const getTodayString = () => new Date().toISOString().slice(0, 10);
+
+// ✅ 통계 페이지랑 맞춘 이모지 색상 맵
+const EMOJI_COLOR_MAP: Record<string, string> = {
+    "😄": "#A5B4FC", // 인디고 300
+    "🙂": "#BFDBFE", // 블루 200
+    "😐": "#E5E7EB", // 그레이 200
+    "😢": "#FCA5A5", // 로즈 300
+    "😡": "#FCA5A5", // 로즈 300
+    "😴": "#C4B5FD", // 퍼플 300
+    "🤩": "#FDE68A", // 앰버 300
+};
 
 // AI 라벨 한글 매핑
 const AI_LABEL_MAP: Record<string, string> = {
@@ -76,7 +94,7 @@ export default function DashboardHomePage() {
     const [emotion, setEmotion] = useState<Emotion | null>(null);
     const [reflection, setReflection] = useState<Reflection | null>(null);
     const [todayTodoStats, setTodayTodoStats] = useState<TodayTodoStats | null>(
-        null
+        null,
     );
 
     const [loading, setLoading] = useState(true);
@@ -190,26 +208,39 @@ export default function DashboardHomePage() {
             ) : (
                 <div className="grid gap-4 md:grid-cols-3">
                     {/* 감정 카드 */}
-                    <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
-                        <p className="text-xs font-medium text-zinc-500">오늘의 감정</p>
+                    <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                        <div className="flex items-center justify-between text-xs text-zinc-500">
+                            <p className="font-medium">오늘의 감정</p>
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-600">
+                감정 · 회고 연동
+              </span>
+                        </div>
                         {emotion ? (
                             <>
-                                <p className="text-3xl">{emotion.emoji}</p>
-                                {emotion.note && (
-                                    <p className="break-words text-xs text-zinc-600">
-                                        {emotion.note}
-                                    </p>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-3xl">{emotion.emoji}</span>
+                                    {emotion.note && (
+                                        <p className="line-clamp-2 text-xs text-zinc-600">
+                                            {emotion.note}
+                                        </p>
+                                    )}
+                                </div>
 
                                 {(aiLabelText || hasAiScores) && (
-                                    <div className="mt-3 space-y-1 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-zinc-700">
-                                        <p className="font-medium text-zinc-800">AI 감정 분석</p>
+                                    <div className="mt-2 space-y-1 rounded-xl bg-indigo-50/80 px-3 py-2 text-xs text-zinc-700">
+                                        <div className="flex items-center justify-between">
+                                            <p className="font-medium text-zinc-800">AI 감정 분석</p>
+                                            {emotion?.aiModel && (
+                                                <span className="text-[10px] text-indigo-500">
+                          model · {emotion.aiModel}
+                        </span>
+                                            )}
+                                        </div>
 
                                         {aiLabelText && (
                                             <p>
-                                                분석 결과:{" "}
-                                                <span className="font-semibold">{aiLabelText}</span>{" "}
-                                                경향
+                                                분석 결과{" "}
+                                                <span className="font-semibold">{aiLabelText}</span> 경향이에요.
                                             </p>
                                         )}
 
@@ -221,8 +252,8 @@ export default function DashboardHomePage() {
                                             </p>
                                         )}
 
-                                        <p className="text-[11px] text-zinc-500">
-                                            * 메모 내용을 기반으로 AI가 분석한 결과예요. 실제 기분과 다를 수도
+                                        <p className="text-[10px] text-zinc-500">
+                                            * 메모 내용을 기반으로 AI가 분석한 결과예요. 실제 기분과는 다를 수도
                                             있어요.
                                         </p>
                                     </div>
@@ -239,10 +270,12 @@ export default function DashboardHomePage() {
                     </div>
 
                     {/* 회고 카드 */}
-                    <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
-                        <p className="text-xs font-medium text-zinc-500">오늘의 회고</p>
+                    <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                        <div className="flex items-center justify-between text-xs text-zinc-500">
+                            <p className="font-medium">오늘의 회고</p>
+                        </div>
                         {reflection ? (
-                            <p className="line-clamp-6 break-words whitespace-pre-wrap text-sm text-zinc-700">
+                            <p className="line-clamp-8 break-words whitespace-pre-wrap text-sm text-zinc-700">
                                 {reflection.content}
                             </p>
                         ) : (
@@ -256,8 +289,10 @@ export default function DashboardHomePage() {
                     </div>
 
                     {/* 할 일 카드 */}
-                    <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
-                        <p className="text-xs font-medium text-zinc-500">할 일 진행률</p>
+                    <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                        <div className="flex items-center justify-between text-xs text-zinc-500">
+                            <p className="font-medium">할 일 진행률</p>
+                        </div>
                         {todayTodoStats ? (
                             <>
                                 <p className="text-lg font-semibold text-zinc-900">
@@ -291,9 +326,7 @@ export default function DashboardHomePage() {
             {/* ---------------- 통계 섹션 (이번 주 감정 & 할 일) ---------------- */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-zinc-900">
-                        이번 주 통계
-                    </h3>
+                    <h3 className="text-base font-semibold text-zinc-900">이번 주 통계</h3>
                     <p className="text-xs text-zinc-500">
                         최근 1주일 동안의 감정 패턴과 할 일 완료율이에요.
                     </p>
@@ -322,7 +355,16 @@ export default function DashboardHomePage() {
                                             <Tooltip
                                                 formatter={(value) => [`${value}회`, "기록 횟수"]}
                                             />
-                                            <Bar dataKey="count" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                                                {emotionChartData.map((entry, index) => (
+                                                    <Cell
+                                                        key={index}
+                                                        fill={
+                                                            EMOJI_COLOR_MAP[entry.emoji] ?? "#D1D5DB" // fallback: gray-300
+                                                        }
+                                                    />
+                                                ))}
+                                            </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -354,7 +396,11 @@ export default function DashboardHomePage() {
                                                 dataKey="value"
                                                 tick={false}
                                             />
-                                            <RadialBar background dataKey="value" cornerRadius={10} />
+                                            <RadialBar
+                                                background
+                                                dataKey="value"
+                                                cornerRadius={10}
+                                            />
                                         </RadialBarChart>
                                     </ResponsiveContainer>
                                 </div>
