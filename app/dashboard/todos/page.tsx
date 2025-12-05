@@ -14,6 +14,9 @@ interface Todo {
     createdAt?: string;
 }
 
+// 오늘 날짜 문자열 (YYYY-MM-DD)
+const getTodayString = () => new Date().toISOString().slice(0, 10);
+
 export default function TodosPage() {
     const [todos, setTodos] = useState<Todo[]>([]);
     const [loading, setLoading] = useState(true);
@@ -24,12 +27,16 @@ export default function TodosPage() {
     const [updatingIds, setUpdatingIds] = useState<number[]>([]);
     const [deletingIds, setDeletingIds] = useState<number[]>([]);
 
-    // ✅ 할 일 목록 조회
+    // ✅ 할 일 목록 조회 (오늘 기준)
     const fetchTodos = async () => {
         setLoading(true);
         setError(null);
+
         try {
-            const res = await api.get("/todos");
+            const today = getTodayString();
+            const res = await api.get("/todos", {
+                params: { date: today }, // 🔥 오늘 날짜로 필터
+            });
             const data = res.data;
 
             let list: Todo[] = [];
@@ -47,7 +54,7 @@ export default function TodosPage() {
                 err?.response?.data?.message ||
                 err?.response?.data?.error ||
                 "할 일 목록을 불러오지 못했어요.";
-            setError(msg); // 👈 에러는 상단 ErrorState로 보여줌
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -129,7 +136,7 @@ export default function TodosPage() {
         }
     };
 
-    // ✅ 간단 통계
+    // ✅ 간단 통계 (오늘 기준 목록에서 계산)
     const total = todos.length;
     const completedCount = todos.filter((t) => t.isDone).length;
     const completionRate =

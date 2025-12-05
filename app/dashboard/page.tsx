@@ -36,6 +36,12 @@ interface Emotion {
     emoji: string;
     note?: string | null;
     date: string;
+
+    // ✅ AI 감정 분석 결과
+    aiLabel?: string | null;
+    positive?: number | null;
+    neutral?: number | null;
+    negative?: number | null;
 }
 
 interface Reflection {
@@ -52,6 +58,16 @@ interface TodayTodoStats {
 }
 
 const getTodayString = () => new Date().toISOString().slice(0, 10);
+
+// AI 라벨 한글 매핑
+const AI_LABEL_MAP: Record<string, string> = {
+    positive: "긍정",
+    negative: "부정",
+    neutral: "중립",
+};
+
+const toPercent = (v?: number | null) =>
+    typeof v === "number" ? Math.round(v * 100) : null;
 
 export default function DashboardHomePage() {
     const [stats, setStats] = useState<SummaryStats | null>(null); // 주간 통계 (차트용)
@@ -148,6 +164,16 @@ export default function DashboardHomePage() {
     // 📊 할 일 통계 (주간 평균 완료율)
     const weeklyTodoRate = stats?.todoStats?.completionRate ?? 0;
 
+    // ✅ 현재 감정의 AI 분석 퍼센트 계산
+    const aiPos = toPercent(emotion?.positive);
+    const aiNeu = toPercent(emotion?.neutral);
+    const aiNeg = toPercent(emotion?.negative);
+    const hasAiScores = aiPos !== null || aiNeu !== null || aiNeg !== null;
+    const aiLabelText =
+        emotion?.aiLabel && AI_LABEL_MAP[emotion.aiLabel]
+            ? AI_LABEL_MAP[emotion.aiLabel]
+            : emotion?.aiLabel ?? null;
+
     return (
         <div className="space-y-8">
             {/* 상단 타이틀 */}
@@ -173,6 +199,33 @@ export default function DashboardHomePage() {
                                     <p className="break-words text-xs text-zinc-600">
                                         {emotion.note}
                                     </p>
+                                )}
+
+                                {(aiLabelText || hasAiScores) && (
+                                    <div className="mt-3 space-y-1 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-zinc-700">
+                                        <p className="font-medium text-zinc-800">AI 감정 분석</p>
+
+                                        {aiLabelText && (
+                                            <p>
+                                                분석 결과:{" "}
+                                                <span className="font-semibold">{aiLabelText}</span>{" "}
+                                                경향
+                                            </p>
+                                        )}
+
+                                        {hasAiScores && (
+                                            <p className="text-[11px] text-zinc-600">
+                                                {aiPos !== null && <>긍정 {aiPos}% · </>}
+                                                {aiNeu !== null && <>중립 {aiNeu}% · </>}
+                                                {aiNeg !== null && <>부정 {aiNeg}%</>}
+                                            </p>
+                                        )}
+
+                                        <p className="text-[11px] text-zinc-500">
+                                            * 메모 내용을 기반으로 AI가 분석한 결과예요. 실제 기분과 다를 수도
+                                            있어요.
+                                        </p>
+                                    </div>
                                 )}
                             </>
                         ) : (
@@ -221,7 +274,7 @@ export default function DashboardHomePage() {
                                             />
                                         </div>
                                         <p className="text-xs text-zinc-500">
-                                            오늘의 완료율 {todayTodoStats.rate}%
+                                            오늘의 완료율 {todayTodoStats.rate}%.
                                         </p>
                                     </div>
                                 )}
@@ -247,7 +300,9 @@ export default function DashboardHomePage() {
                 </div>
 
                 {loadingStats ? (
-                    <p className="text-xs text-zinc-500">통계를 불러오는 중입니다...</p>
+                    <p className="text-xs text-zinc-500">
+                        통계를 불러오는 중입니다...
+                    </p>
                 ) : !stats ? (
                     <p className="text-xs text-zinc-500">
                         아직 통계 데이터가 없어요. 감정과 할 일을 기록해 보세요.
@@ -267,12 +322,7 @@ export default function DashboardHomePage() {
                                             <Tooltip
                                                 formatter={(value) => [`${value}회`, "기록 횟수"]}
                                             />
-                                            <Bar
-                                                dataKey="count"
-                                                radius={[6, 6, 0, 0]}
-                                                // 색상은 기본 theme에 맡겨도 되지만, 인지성을 위해 한 번 지정
-                                                fill="#6366F1"
-                                            />
+                                            <Bar dataKey="count" radius={[6, 6, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -304,12 +354,7 @@ export default function DashboardHomePage() {
                                                 dataKey="value"
                                                 tick={false}
                                             />
-                                            <RadialBar
-                                                background
-                                                dataKey="value"
-                                                cornerRadius={10}
-                                                fill="#22C55E"
-                                            />
+                                            <RadialBar background dataKey="value" cornerRadius={10} />
                                         </RadialBarChart>
                                     </ResponsiveContainer>
                                 </div>

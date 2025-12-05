@@ -10,15 +10,35 @@ import { ErrorState } from "@/components/ui/ErrorState";
 interface Emotion {
     id: number;
     emoji: string;
-    note?: string | null; // ✅ 메모 필드
+    note?: string | null; // 메모 필드
     date: string;
     createdAt?: string;
     updatedAt?: string;
+
+    // 🔮 AI 분석 필드
+    aiLabel?: string | null;
+    positive?: number | null;
+    neutral?: number | null;
+    negative?: number | null;
 }
 
 const EMOJIS = ["😄", "🙂", "😐", "😢", "😡", "😴", "🤩"];
 
 const getTodayString = () => new Date().toISOString().slice(0, 10);
+
+// AI label → 한글 라벨 변환
+const getKoreanLabel = (label?: string | null) => {
+    if (!label) return null;
+    const lower = label.toLowerCase();
+    if (lower.includes("pos")) return "긍정";
+    if (lower.includes("neu")) return "중립";
+    if (lower.includes("neg")) return "부정";
+    return label; // 모르는 라벨이면 그대로 보여주기
+};
+
+// 점수 포맷 (소수점 2자리)
+const formatScore = (score?: number | null) =>
+    typeof score === "number" ? score.toFixed(2) : "-";
 
 export default function EmotionsPage() {
     const [date, setDate] = useState(getTodayString());
@@ -48,7 +68,7 @@ export default function EmotionsPage() {
 
             setCurrentEmotion(emotion);
             setSelectedEmoji(emotion?.emoji ?? null);
-            setNote(emotion?.note ?? ""); // ✅ DB note 값 반영
+            setNote(emotion?.note ?? "");
         } catch (err: any) {
             console.error("감정 조회 실패:", err?.response?.data || err);
 
@@ -76,23 +96,23 @@ export default function EmotionsPage() {
         setSaving(true);
         try {
             if (currentEmotion) {
-                // ✅ 기존 감정 수정: /emotions/:id + emoji, note
+                // 기존 감정 수정: /emotions/:id + emoji, note
                 await api.patch(`/emotions/${currentEmotion.id}`, {
                     emoji: selectedEmoji,
-                    note, // ✅ text → note
+                    note,
                 });
                 alert("오늘 감정을 수정했어요.");
             } else {
-                // ✅ 새 감정 생성: /emotions + emoji, date, note
+                // 새 감정 생성: /emotions + emoji, date, note
                 await api.post("/emotions", {
                     emoji: selectedEmoji,
                     date,
-                    note, // ✅ text → note
+                    note,
                 });
                 alert("오늘 감정을 기록했어요.");
             }
 
-            // 다시 조회해서 상태 동기화
+            // 다시 조회해서 상태 동기화 (AI 결과 포함)
             fetchEmotion(date);
         } catch (err: any) {
             console.error("감정 저장 실패:", err?.response?.data || err);
@@ -109,6 +129,7 @@ export default function EmotionsPage() {
     }, [date]);
 
     const today = getTodayString();
+    const aiKoreanLabel = getKoreanLabel(currentEmotion?.aiLabel);
 
     return (
         <div className="space-y-6">
@@ -116,7 +137,7 @@ export default function EmotionsPage() {
             <div className="flex items-center justify-between gap-4">
                 <PageTitle
                     title="감정 기록"
-                    description="하루에 하나의 감정을 이모지로 기록하고, 짧은 메모로 남길 수 있어요."
+                    description="하루에 하나의 감정을 이모지로 기록하고, 짧은 메모와 함께 AI 분석 결과도 확인할 수 있어요."
                 />
 
                 <div className="flex items-center gap-2 text-sm">
@@ -163,7 +184,8 @@ export default function EmotionsPage() {
 
                             {currentEmotion ? (
                                 <p className="mt-1 text-xs text-zinc-500">
-                                    이 날의 감정은 이미 기록되어 있어요. 이모지나 메모를 수정할 수 있어요.
+                                    이 날의 감정은 이미 기록되어 있어요. 이모지나 메모를 수정할 수
+                                    있어요.
                                 </p>
                             ) : (
                                 <p className="mt-1 text-xs text-zinc-500">
@@ -181,10 +203,32 @@ export default function EmotionsPage() {
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
                                 rows={3}
-                                placeholder="오늘의 기분이나 이유를 메모로 남겨보세요."
+                                placeholder="오늘의 기분이나 이유를 메모로 남겨보세요. 이 텍스트를 기반으로 AI가 감정을 분석해요."
                                 className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
+
+                        {/* 🔮 AI 감정 분석 결과 영역 */}
+                        {currentEmotion && currentEmotion.aiLabel && (
+                            <div className="space-y-1 rounded-md bg-indigo-50 px-3 py-3 text-xs">
+                                <p className="font-medium text-indigo-800">AI 감정 분석 결과</p>
+                                <p className="mt-1 text-indigo-900">
+                                    분석된 감정:{" "}
+                                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-indigo-700">
+                    {aiKoreanLabel ?? currentEmotion.aiLabel}
+                  </span>
+                                </p>
+                                <p className="mt-1 text-indigo-800">
+                                    점수 — 긍정 {formatScore(currentEmotion.positive)} · 중립{" "}
+                                    {formatScore(currentEmotion.neutral)} · 부정{" "}
+                                    {formatScore(currentEmotion.negative)}
+                                </p>
+                                <p className="mt-1 text-[11px] text-indigo-600">
+                                    * 작성한 메모 텍스트를 기반으로 한 자동 분석이에요. 실제 기분과
+                                    다를 수도 있어요.
+                                </p>
+                            </div>
+                        )}
 
                         {/* 저장 버튼 */}
                         <div className="flex justify-end">
