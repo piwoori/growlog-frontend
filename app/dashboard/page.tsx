@@ -68,12 +68,12 @@ const getTodayString = () => new Date().toISOString().slice(0, 10);
 
 // ✅ 통계 페이지랑 맞춘 이모지 색상 맵
 const EMOJI_COLOR_MAP: Record<string, string> = {
-    "😄": "#A5B4FC", // 인디고 300
-    "🙂": "#BFDBFE", // 블루 200
-    "😐": "#E5E7EB", // 그레이 200
-    "😢": "#FCA5A5", // 로즈 300
-    "😡": "#FCA5A5", // 로즈 300
-    "😴": "#C4B5FD", // 퍼플 300
+    "😄": "#D8B4FE", // 보라 300
+    "🙂": "#F9A8D4", // 분홍 300
+    "😐": "#D1D5DB", // 그레이 300
+    "😢": "#93C5FD", // 블루 300
+    "😡": "#FCA5A5", // 레드 300
+    "😴": "#86EFAC", // 초록 300
     "🤩": "#FDE68A", // 앰버 300
 };
 
@@ -400,6 +400,7 @@ export default function DashboardHomePage() {
                                                 background
                                                 dataKey="value"
                                                 cornerRadius={10}
+                                                fill="#9CA3AF" // 그레이 400
                                             />
                                         </RadialBarChart>
                                     </ResponsiveContainer>
