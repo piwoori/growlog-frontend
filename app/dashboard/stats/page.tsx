@@ -41,19 +41,19 @@ interface SummaryStats {
 
 // ✅ 통계 페이지랑 맞춘 이모지 색상 맵
 const EMOJI_COLOR_MAP: Record<string, string> = {
-    "😄": "#D8B4FE", // 보라 300
-    "🙂": "#F9A8D4", // 분홍 300
-    "😐": "#D1D5DB", // 그레이 300
-    "😢": "#93C5FD", // 블루 300
-    "😡": "#FCA5A5", // 레드 300
-    "😴": "#86EFAC", // 초록 300
-    "🤩": "#FDE68A", // 앰버 300
+    "😄": "#C8BBE3", // 보라 ash
+    "🙂": "#EAC7D7", // 분홍 ash
+    "😐": "#C8CBD1", // 그레이 ash
+    "😢": "#AFC6DF", // 블루 ash
+    "😡": "#E2B4B4", // 레드 ash
+    "😴": "#B7D3BE", // 초록 ash
+    "🤩": "#E7DAA7", // 앰버 ash
 };
 
 const AI_PIE_COLORS = {
-    positive: "#D8B4FE", // 보라 300
-    neutral: "#D1D5DB", // 그레이 300
-    negative: "#FCA5A5", // 레드 300
+    positive: "#C8BBE3", // 보라 ash
+    neutral: "#C8CBD1", // 그레이 ash
+    negative: "#E2B4B4", // 레드 ash
 };
 
 const getTodayString = () => new Date().toISOString().slice(0, 10);

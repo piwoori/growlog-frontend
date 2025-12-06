@@ -1,16 +1,24 @@
-// app/dashboard/layout.tsx
 "use client";
 
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation"; // ✅ usePathname 추가
-import { motion } from "framer-motion";                   // ✅ motion 이미 있으면 중복 X
+import { useRouter, usePathname } from "next/navigation";
+import { motion } from "framer-motion";
+import clsx from "clsx";
 import { fetchCurrentUser, type AuthUser } from "@/lib/auth";
+
+const NAV_ITEMS = [
+    { href: "/dashboard", label: "오늘 요약" },
+    { href: "/dashboard/todos", label: "할 일" },
+    { href: "/dashboard/reflections", label: "회고" },
+    { href: "/dashboard/emotions", label: "감정" },
+    { href: "/dashboard/stats", label: "통계" },
+];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     const router = useRouter();
-    const pathname = usePathname();        // ✅ 여기서 현재 경로 가져오기
+    const pathname = usePathname();
 
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
@@ -55,21 +63,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <aside className="w-60 border-r border-zinc-200 bg-white px-4 py-6">
                 <h1 className="mb-8 text-xl font-semibold text-zinc-900">Growlog</h1>
                 <nav className="flex flex-col gap-2 text-sm">
-                    <Link href="/dashboard" className="rounded-md px-3 py-2 hover:bg-zinc-100">
-                        오늘 요약
-                    </Link>
-                    <Link href="/dashboard/todos" className="rounded-md px-3 py-2 hover:bg-zinc-100">
-                        할 일
-                    </Link>
-                    <Link href="/dashboard/reflections" className="rounded-md px-3 py-2 hover:bg-zinc-100">
-                        회고
-                    </Link>
-                    <Link href="/dashboard/emotions" className="rounded-md px-3 py-2 hover:bg-zinc-100">
-                        감정
-                    </Link>
-                    <Link href="/dashboard/stats" className="rounded-md px-3 py-2 hover:bg-zinc-100">
-                        통계
-                    </Link>
+                    {NAV_ITEMS.map((item) => {
+                        const isRoot = item.href === "/dashboard";
+
+                        // ✅ 루트(/dashboard)는 완전 일치일 때만 활성
+                        // ✅ 나머지는 하위 경로까지 허용
+                        const isActive = isRoot
+                            ? pathname === item.href
+                            : pathname === item.href || pathname.startsWith(item.href + "/");
+
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={clsx(
+                                    "rounded-md px-3 py-2 transition",
+                                    isActive
+                                        ? "bg-[#F3F4F6] text-zinc-900" // ✅ 활성 색상 변경
+                                        : "text-zinc-600 hover:bg-zinc-100"
+                                )}
+                            >
+                                {item.label}
+                            </Link>
+                        );
+                    })}
                 </nav>
             </aside>
 
@@ -97,7 +114,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     </button>
                 </header>
 
-                {/* 🔥 페이지 전환 시마다 다시 마운트되도록 key=pathname */}
                 <motion.div
                     key={pathname}
                     initial={{ opacity: 0, y: 20 }}
