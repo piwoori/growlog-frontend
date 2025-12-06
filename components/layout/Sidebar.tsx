@@ -1,4 +1,3 @@
-// components/layout/Sidebar.tsx
 "use client";
 
 import Link from "next/link";
@@ -11,6 +10,8 @@ const NAV_ITEMS = [
     { href: "/dashboard/reflections", label: "회고" },
     { href: "/dashboard/emotions", label: "감정" },
     { href: "/dashboard/stats", label: "통계" },
+    // ✅ 설정 페이지 사이드바에서도 보이게
+    { href: "/settings", label: "설정" },
 ];
 
 function normalizePath(path: string | null): string {
@@ -31,15 +32,21 @@ export function Sidebar() {
             <div className="px-4 py-6">
                 <h1 className="mb-6 text-lg font-semibold text-zinc-900">Growlog</h1>
 
-                {/* 디버그용 – 잘 되면 이 <p>는 지워도 돼 */}
-                <p className="mb-4 text-[10px] text-zinc-400 break-all">
-                    현재 경로: {pathname}
-                </p>
+                {/* 디버그용 – 문제 해결되면 삭제해도 됨 */}
+                {/* <p className="mb-4 text-[10px] text-zinc-400 break-all">
+          현재 경로: {pathname}
+        </p> */}
 
                 <nav className="space-y-1">
                     {NAV_ITEMS.map((item) => {
                         const href = normalizePath(item.href);
-                        const isActive = pathname === href;
+
+                        // ✅ 완전 일치 + 하위 경로 둘 다 활성으로 처리
+                        // 예: "/dashboard"  → "오늘 요약" 활성
+                        //     "/dashboard/todos" → "할 일" 활성
+                        const isActive =
+                            pathname === href ||
+                            (href !== "/dashboard" && pathname.startsWith(href));
 
                         return (
                             <Link

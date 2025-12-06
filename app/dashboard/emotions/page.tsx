@@ -236,7 +236,7 @@ export default function EmotionsPage() {
                                 type="button"
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="rounded-md bg-[#F3F4F6] px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {saving
                                     ? "저장 중..."
