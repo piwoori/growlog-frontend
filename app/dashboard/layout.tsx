@@ -109,7 +109,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <p className="text-sm text-zinc-500">오늘도 성장하는 중 🌱</p>
                         {user && (
                             <p className="text-lg font-semibold text-zinc-900">
-                                {(user.nickname || user.email) + "님, 환영합니다."}
+                                {(user.nickname || user.email) + "님, 환영해요."}
                             </p>
                         )}
                     </div>

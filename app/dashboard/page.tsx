@@ -14,7 +14,7 @@ import {
     RadialBarChart,
     RadialBar,
     PolarAngleAxis,
-    Cell,              // ✅ 추가
+    Cell,
 } from "recharts";
 
 interface EmotionStats {
@@ -38,7 +38,6 @@ interface Emotion {
     note?: string | null;
     date: string;
 
-    // ✅ AI 감정 분석 결과
     positive?: number | null;
     neutral?: number | null;
     negative?: number | null;
@@ -200,61 +199,87 @@ export default function DashboardHomePage() {
                 description="오늘의 감정, 회고, 할 일 진행 상황을 한 번에 볼 수 있어요."
             />
 
-            {/* 오늘 요약 카드 3개 */}
+            {/* 오늘 요약 카드 섹션 */}
             {loading ? (
                 <p className="text-sm text-zinc-500">
                     오늘 데이터를 불러오는 중입니다...
                 </p>
             ) : (
-                <div className="grid gap-4 md:grid-cols-3">
-                    {/* 감정 카드 */}
-                    <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-                        <div className="flex items-center justify-between text-xs text-zinc-500">
+                <div className="grid items-stretch gap-4 md:grid-cols-[3fr_2fr]">
+                    {/* ░░ 왼쪽: 오늘의 감정 (세로 전체 사용) ░░ */}
+                    <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                        <div className="mb-3 flex items-center justify-between text-xs text-zinc-500">
                             <p className="font-medium">오늘의 감정</p>
                             <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-600">
-                감정 · 회고 연동
-              </span>
+                                감정 · 회고 연동
+                            </span>
                         </div>
+
                         {emotion ? (
                             <>
-                                <div className="flex items-center gap-2">
+                                {/* 위쪽: 이모지 + 메모 요약 */}
+                                <div className="flex items-start gap-3">
                                     <span className="text-3xl">{emotion.emoji}</span>
                                     {emotion.note && (
-                                        <p className="line-clamp-2 text-xs text-zinc-600">
+                                        <p className="line-clamp-3 text-sm text-zinc-700">
                                             {emotion.note}
                                         </p>
                                     )}
                                 </div>
 
+                                {/* 아래쪽: AI 분석 박스 */}
                                 {(aiLabelText || hasAiScores) && (
-                                    <div className="mt-2 space-y-1 rounded-xl bg-indigo-50/80 px-3 py-2 text-xs text-zinc-700">
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-medium text-zinc-800">AI 감정 분석</p>
-                                            {emotion?.aiModel && (
-                                                <span className="text-[10px] text-indigo-500">
-                          model · {emotion.aiModel}
-                        </span>
+                                    <div className="mt-4 space-y-2 rounded-2xl bg-indigo-50/80 px-3 py-3 text-xs text-zinc-700">
+                                        {/* 헤더 라인 */}
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-indigo-500">
+                                                AI
+                                            </span>
+                                            <p className="text-[11px] font-semibold text-zinc-800">
+                                                AI 감정 분석
+                                            </p>
+                                            {aiLabelText && (
+                                                <span className="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-medium text-indigo-600">
+                                                    {aiLabelText} 경향
+                                                </span>
                                             )}
                                         </div>
 
+                                        {/* 요약 문장 */}
                                         {aiLabelText && (
-                                            <p>
-                                                분석 결과{" "}
-                                                <span className="font-semibold">{aiLabelText}</span> 경향이에요.
+                                            <p className="text-[11px] leading-relaxed text-zinc-700">
+                                                메모를 기반으로 볼 때, 오늘 하루는{" "}
+                                                <span className="font-semibold text-zinc-900">
+                                                    {aiLabelText} 쪽에 조금 더 가까운 날
+                                                </span>
+                                                이었어요.
                                             </p>
                                         )}
 
+                                        {/* 점수 뱃지들 */}
                                         {hasAiScores && (
-                                            <p className="text-[11px] text-zinc-600">
-                                                {aiPos !== null && <>긍정 {aiPos}% · </>}
-                                                {aiNeu !== null && <>중립 {aiNeu}% · </>}
-                                                {aiNeg !== null && <>부정 {aiNeg}%</>}
-                                            </p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {aiPos !== null && (
+                                                    <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] text-zinc-700">
+                                                        긍정 {aiPos}%
+                                                    </span>
+                                                )}
+                                                {aiNeu !== null && (
+                                                    <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] text-zinc-700">
+                                                        중립 {aiNeu}%
+                                                    </span>
+                                                )}
+                                                {aiNeg !== null && (
+                                                    <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] text-zinc-700">
+                                                        부정 {aiNeg}%
+                                                    </span>
+                                                )}
+                                            </div>
                                         )}
 
-                                        <p className="text-[10px] text-zinc-500">
-                                            * 메모 내용을 기반으로 AI가 분석한 결과예요. 실제 기분과는 다를 수도
-                                            있어요.
+                                        <p className="text-[10px] leading-relaxed text-zinc-500">
+                                            * 메모 내용을 기반으로 AI가 분석한 결과예요. 실제 기분과는
+                                            다를 수도 있어요.
                                         </p>
                                     </div>
                                 )}
@@ -263,68 +288,86 @@ export default function DashboardHomePage() {
                             <p className="text-sm text-zinc-500">
                                 아직 감정이 기록되지 않았어요.{" "}
                                 <span className="underline underline-offset-2">
-                  왼쪽 메뉴의 &lsquo;감정&rsquo;에서 기록해 보세요.
-                </span>
+                                    왼쪽 메뉴의 &lsquo;감정&rsquo;에서 기록해 보세요.
+                                </span>
                             </p>
                         )}
                     </div>
 
-                    {/* 회고 카드 */}
-                    <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-                        <div className="flex items-center justify-between text-xs text-zinc-500">
-                            <p className="font-medium">오늘의 회고</p>
-                        </div>
-                        {reflection ? (
-                            <p className="line-clamp-8 break-words whitespace-pre-wrap text-sm text-zinc-700">
-                                {reflection.content}
-                            </p>
-                        ) : (
-                            <p className="text-sm text-zinc-500">
-                                아직 회고가 기록되지 않았어요.{" "}
-                                <span className="underline underline-offset-2">
-                  &lsquo;회고&rsquo; 페이지에서 오늘을 정리해 보세요.
-                </span>
-                            </p>
-                        )}
-                    </div>
-
-                    {/* 할 일 카드 */}
-                    <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-                        <div className="flex items-center justify-between text-xs text-zinc-500">
-                            <p className="font-medium">할 일 진행률</p>
-                        </div>
-                        {todayTodoStats ? (
-                            <>
-                                <p className="text-lg font-semibold text-zinc-900">
-                                    {todayTodoStats.total === 0
-                                        ? "등록된 할 일이 없어요."
-                                        : `${todayTodoStats.total}개 중 ${todayTodoStats.completed}개 완료`}
-                                </p>
-                                {todayTodoStats.total > 0 && (
-                                    <div className="space-y-2">
-                                        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
-                                            <div
-                                                className="h-full rounded-full bg-indigo-500 transition-all"
-                                                style={{ width: `${todayTodoStats.rate}%` }}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-zinc-500">
-                                            오늘의 완료율 {todayTodoStats.rate}%.
-                                        </p>
-                                    </div>
+                    {/* ░░ 오른쪽: 회고 + 할 일 (위/아래 카드 높이 동일) ░░ */}
+                    <div className="flex h-full flex-col space-y-4">
+                        {/* 오늘의 회고 카드 */}
+                        <div className="flex flex-1 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                            <p className="text-xs font-medium text-zinc-500">오늘의 회고</p>
+                            <div className="flex-1">
+                                {reflection ? (
+                                    <p className="line-clamp-6 break-words whitespace-pre-wrap text-xs text-zinc-700 md:text-sm">
+                                        {reflection.content}
+                                    </p>
+                                ) : (
+                                    <p className="text-xs text-zinc-500 md:text-sm">
+                                        아직 회고가 기록되지 않았어요.{" "}
+                                        <span className="underline underline-offset-2">
+                                            &lsquo;회고&rsquo; 페이지에서 오늘을 정리해 보세요.
+                                        </span>
+                                    </p>
                                 )}
-                            </>
-                        ) : (
-                            <p className="text-sm text-zinc-500">
-                                할 일 통계를 불러오지 못했어요.
-                            </p>
-                        )}
+                            </div>
+                        </div>
+
+                        {/* 할 일 진행률 카드 */}
+                        <div className="flex flex-1 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                            <p className="text-xs font-medium text-zinc-500">할 일 진행률</p>
+
+                            {todayTodoStats ? (
+                                <>
+                                    <p className="text-sm font-semibold text-zinc-900">
+                                        {todayTodoStats.total === 0 ? (
+                                            <>등록된 할 일이 없어요.</>
+                                        ) : (
+                                            <>
+                                                <span className="whitespace-nowrap">
+                                                    {todayTodoStats.total}개
+                                                </span>{" "}
+                                                중{" "}
+                                                <span className="whitespace-nowrap">
+                                                    {todayTodoStats.completed}개
+                                                </span>{" "}
+                                                완료
+                                            </>
+                                        )}
+                                    </p>
+
+                                    {todayTodoStats.total > 0 && (
+                                        <div className="mt-1 space-y-2">
+                                            <div className="h-2.5 w-full overflow-hidden rounded-full bg-zinc-100">
+                                                <div
+                                                    className="h-full rounded-full bg-indigo-500 transition-all"
+                                                    style={{ width: `${todayTodoStats.rate}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-right text-xs text-zinc-500 md:text-left">
+                                                오늘의 완료율{" "}
+                                                <span className="whitespace-nowrap">
+                                                    {todayTodoStats.rate}%
+                                                </span>
+                                                .
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <p className="text-xs text-zinc-500">
+                                    할 일 통계를 불러오지 못했어요.
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* ---------------- 통계 섹션 (이번 주 감정 & 할 일) ---------------- */}
-            <div className="space-y-3">
+            <section className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-zinc-900">이번 주 통계</h3>
                     <p className="text-xs text-zinc-500">
@@ -333,22 +376,22 @@ export default function DashboardHomePage() {
                 </div>
 
                 {loadingStats ? (
-                    <p className="text-xs text-zinc-500">
+                    <div className="rounded-2xl border border-zinc-200 bg-white p-4 text-xs text-zinc-500 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
                         통계를 불러오는 중입니다...
-                    </p>
+                    </div>
                 ) : !stats ? (
-                    <p className="text-xs text-zinc-500">
+                    <div className="rounded-2xl border border-zinc-200 bg-white p-4 text-xs text-zinc-500 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
                         아직 통계 데이터가 없어요. 감정과 할 일을 기록해 보세요.
-                    </p>
+                    </div>
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid items-stretch gap-4 md:grid-cols-3">
                         {/* 감정 빈도 차트 */}
-                        <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
+                        <div className="flex h-full flex-col space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
                             <p className="text-xs font-medium text-zinc-500">
                                 이번 주 감정 분포
                             </p>
                             {emotionChartData && emotionChartData.length > 0 ? (
-                                <div className="h-56">
+                                <div className="mt-1 h-56">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={emotionChartData}>
                                             <XAxis dataKey="emoji" />
@@ -360,7 +403,8 @@ export default function DashboardHomePage() {
                                                     <Cell
                                                         key={index}
                                                         fill={
-                                                            EMOJI_COLOR_MAP[entry.emoji] ?? "#D1D5DB" // fallback: gray-300
+                                                            EMOJI_COLOR_MAP[entry.emoji] ??
+                                                            "#D1D5DB"
                                                         }
                                                     />
                                                 ))}
@@ -376,12 +420,13 @@ export default function DashboardHomePage() {
                         </div>
 
                         {/* 할 일 완료율 도넛 차트 */}
-                        <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
+                        <div className="flex h-full flex-col space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] md:col-span-2">
                             <p className="text-xs font-medium text-zinc-500">
                                 이번 주 평균 할 일 완료율
                             </p>
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="h-40 w-40">
+
+                            <div className="mt-1 flex flex-1 items-center justify-between gap-4">
+                                <div className="h-40 w-40 shrink-0">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <RadialBarChart
                                             data={[{ name: "완료율", value: weeklyTodoRate }]}
@@ -405,12 +450,17 @@ export default function DashboardHomePage() {
                                         </RadialBarChart>
                                     </ResponsiveContainer>
                                 </div>
+
                                 <div className="space-y-1 text-right text-xs text-zinc-600">
                                     <p className="text-sm font-semibold text-zinc-900">
                                         {weeklyTodoRate}% 완료
                                     </p>
-                                    <p>이번 주 전체 할 일: {stats.todoStats.total}개</p>
-                                    <p>완료된 할 일: {stats.todoStats.completed}개</p>
+                                    <p className="whitespace-nowrap">
+                                        이번 주 전체 할 일: {stats.todoStats.total}개
+                                    </p>
+                                    <p className="whitespace-nowrap">
+                                        완료된 할 일: {stats.todoStats.completed}개
+                                    </p>
                                     <p className="text-[11px] text-zinc-500">
                                         한 주 동안의 평균 완료율이에요.
                                     </p>
@@ -419,7 +469,7 @@ export default function DashboardHomePage() {
                         </div>
                     </div>
                 )}
-            </div>
+            </section>
         </div>
     );
 }
