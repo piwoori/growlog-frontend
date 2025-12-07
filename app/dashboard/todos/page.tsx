@@ -27,15 +27,18 @@ export default function TodosPage() {
     const [updatingIds, setUpdatingIds] = useState<number[]>([]);
     const [deletingIds, setDeletingIds] = useState<number[]>([]);
 
-    // ✅ 할 일 목록 조회 (오늘 기준)
-    const fetchTodos = async () => {
+    // ⭐ 날짜 상태 추가
+    const [date, setDate] = useState(getTodayString());
+    const today = getTodayString();
+
+    // ✅ 할 일 목록 조회 (선택한 날짜 기준)
+    const fetchTodos = async (targetDate: string) => {
         setLoading(true);
         setError(null);
 
         try {
-            const today = getTodayString();
             const res = await api.get("/todos", {
-                params: { date: today }, // 🔥 오늘 날짜로 필터
+                params: { date: targetDate }, // 🔥 선택한 날짜로 필터
             });
             const data = res.data;
 
@@ -60,11 +63,13 @@ export default function TodosPage() {
         }
     };
 
+    // ⭐ 날짜가 바뀔 때마다 다시 조회
     useEffect(() => {
-        fetchTodos();
-    }, []);
+        fetchTodos(date);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [date]);
 
-    // ✅ 새 할 일 추가
+    // ✅ 새 할 일 추가 (선택한 날짜에 추가)
     const handleAddTodo = async () => {
         if (!newContent.trim()) {
             alert("할 일 내용을 입력해주세요.");
@@ -75,10 +80,11 @@ export default function TodosPage() {
         try {
             await api.post("/todos", {
                 content: newContent.trim(),
+                date, // ⭐ 이 날짜 기준으로 저장
             });
 
             setNewContent("");
-            await fetchTodos();
+            await fetchTodos(date); // ⭐ 현재 선택 날짜 기준으로 리로드
         } catch (err: any) {
             console.error("할 일 추가 실패:", err?.response?.data || err);
 
@@ -136,23 +142,40 @@ export default function TodosPage() {
         }
     };
 
-    // ✅ 간단 통계 (오늘 기준 목록에서 계산)
+    // ✅ 간단 통계 (현재 선택한 날짜 기준 목록에서 계산)
     const total = todos.length;
     const completedCount = todos.filter((t) => t.isDone).length;
     const completionRate =
         total === 0 ? 0 : Math.round((completedCount / total) * 100);
 
+    const isToday = date === today;
+
     return (
         <div className="space-y-6">
-            {/* 상단 타이틀 + 요약 카드 */}
+            {/* 상단 타이틀 + 날짜 선택 + 요약 카드 */}
             <div className="flex items-start justify-between gap-4">
-                <PageTitle
-                    title="할 일"
-                    description="오늘 해야 할 일들을 적어두고, 완료한 일은 체크해 보세요."
-                />
+                <div className="space-y-3">
+                    <PageTitle
+                        title="할 일"
+                        description="하루 단위로 해야 할 일들을 적어두고, 완료한 일은 체크해 보세요."
+                    />
+
+                    {/* ⭐ 날짜 선택 */}
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className="text-zinc-500">날짜</span>
+                        <input
+                            type="date"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            className="rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                    </div>
+                </div>
 
                 <div className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-right">
-                    <p className="text-xs text-zinc-500">오늘의 진행 상황</p>
+                    <p className="text-xs text-zinc-500">
+                        {isToday ? "오늘의 진행 상황" : "이 날짜의 진행 상황"}
+                    </p>
                     <p className="text-sm font-medium text-zinc-900">
                         {total === 0
                             ? "등록된 할 일이 없어요"
@@ -163,7 +186,9 @@ export default function TodosPage() {
 
             {/* 새 할 일 입력 */}
             <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
-                <p className="text-sm font-medium text-zinc-800">새 할 일 추가</p>
+                <p className="text-sm font-medium text-zinc-800">
+                    {isToday ? "오늘의 새 할 일 추가" : "이 날짜의 새 할 일 추가"}
+                </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <input
                         type="text"
@@ -176,7 +201,7 @@ export default function TodosPage() {
                         type="button"
                         onClick={handleAddTodo}
                         disabled={adding}
-                        className="whitespace-nowrap rounded-md bg-[#F3F4F6] px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="whitespace-nowrap rounded-md bg-[#F3F4F6] px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-[#F3F4F6] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {adding ? "추가 중..." : "할 일 추가"}
                     </button>
@@ -188,7 +213,9 @@ export default function TodosPage() {
 
             {/* 할 일 목록 */}
             <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                <p className="mb-3 text-sm font-medium text-zinc-800">할 일 목록</p>
+                <p className="mb-3 text-sm font-medium text-zinc-800">
+                    {isToday ? "오늘의 할 일 목록" : "이 날짜의 할 일 목록"}
+                </p>
 
                 {/* 에러 공통 위치 */}
                 {error && <ErrorState message={error} />}
