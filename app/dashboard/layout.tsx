@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -61,7 +62,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="flex min-h-screen bg-zinc-50">
             {/* 사이드바 */}
             <aside className="w-60 border-r border-zinc-200 bg-white px-4 py-6">
-                <h1 className="mb-8 text-xl font-semibold text-zinc-900">Growlog</h1>
+                {/* ✅ 로고 이미지 */}
+                <Link href="/dashboard" className="mb-8 inline-flex items-center">
+                    <Image
+                        src="/growlog-logo.png" // public/growlog-logo.png 에 위치
+                        alt="Growlog"
+                        width={120}
+                        height={30}
+                        className="h-5 w-auto object-contain"
+                        priority
+                    />
+                </Link>
+
                 <nav className="flex flex-col gap-2 text-sm">
                     {NAV_ITEMS.map((item) => {
                         const isRoot = item.href === "/dashboard";
@@ -79,7 +91,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                                 className={clsx(
                                     "rounded-md px-3 py-2 transition",
                                     isActive
-                                        ? "bg-[#F3F4F6] text-zinc-900" // ✅ 활성 색상 변경
+                                        ? "bg-[#F3F4F6] text-zinc-900" // 활성 색상
                                         : "text-zinc-600 hover:bg-zinc-100"
                                 )}
                             >

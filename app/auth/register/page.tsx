@@ -108,7 +108,7 @@ export default function RegisterPage() {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 w-full rounded-full bg-zinc-900 py-2.5 text-sm font-medium text-zinc-50 hover:bg-zinc-800 disabled:opacity-60"
+                    className="mt-2 w-full rounded-full bg-[#F3F4F6] py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 disabled:opacity-60"
                 >
                     {isLoading ? "가입 중..." : "가입하기"}
                 </button>

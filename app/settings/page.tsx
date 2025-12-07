@@ -143,7 +143,7 @@ export default function SettingsPage() {
                                     <button
                                         onClick={handleUpdateProfile}
                                         disabled={savingProfile}
-                                        className="rounded-md bg-zinc-900 px-3 text-xs font-medium text-white disabled:opacity-50"
+                                        className="flex h-[36px] shrink-0 items-center justify-center rounded-md bg-[#F3F4F6] px-4 text-xs font-medium text-zinc-900 whitespace-nowrap hover:bg-zinc-200 disabled:opacity-50"
                                     >
                                         {savingProfile ? "저장 중..." : "저장"}
                                     </button>
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                             <button
                                 onClick={handleChangePassword}
                                 disabled={savingPassword}
-                                className="rounded-md bg-zinc-900 px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
+                                className="rounded-md bg-[#F3F4F6] px-4 py-1.5 text-xs font-medium text-zinc-900 hover:bg-zinc-200 disabled:opacity-50"
                             >
                                 {savingPassword ? "변경 중..." : "비밀번호 변경"}
                             </button>

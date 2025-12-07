@@ -19,7 +19,6 @@ export default function LoginPage() {
         e.preventDefault();
         setError(null);
 
-        // 프론트 단 기본 검증 문구 통일
         if (!email.trim()) {
             setError("이메일을 입력해 주세요.");
             return;
@@ -33,17 +32,16 @@ export default function LoginPage() {
 
         try {
             const res = await api.post("/auth/login", { email, password });
+            const token = res.data?.token;
 
-            const token = res.data?.token; // Swagger에서 token으로 명시됨
             if (!token) {
-                setError("로그인에 실패했어요. 잠시 후 다시 시도해 주세요.");
+                setError("로그인에 실패했어요. 다시 시도해 주세요.");
                 return;
             }
 
             localStorage.setItem("accessToken", token);
             router.push("/dashboard");
         } catch (err: any) {
-            console.error("로그인 에러:", err.response?.status, err.response?.data);
             setError(
                 err.response?.data?.message ||
                 err.response?.data?.error ||
@@ -75,7 +73,6 @@ export default function LoginPage() {
                         className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        required
                         placeholder="example@growlog.me"
                     />
                 </div>
@@ -87,15 +84,15 @@ export default function LoginPage() {
                         className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        required
                         placeholder="8자 이상 입력해 주세요."
                     />
                 </div>
 
+                {/* 🔥 Gray 100 버튼 유지 */}
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 w-full rounded-full bg-zinc-900 py-2.5 text-sm font-medium text-zinc-50 hover:bg-zinc-800 disabled:opacity-60 disabled:hover:bg-zinc-900"
+                    className="mt-2 w-full rounded-full bg-[#F3F4F6] py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 disabled:opacity-60"
                 >
                     {isLoading ? "로그인 중..." : "로그인"}
                 </button>
