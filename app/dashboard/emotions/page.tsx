@@ -20,6 +20,11 @@ interface Emotion {
     positive?: number | null;
     neutral?: number | null;
     negative?: number | null;
+
+    // 🌱 AI 조언 필드
+    aiAdvice?: string | null;
+    aiAdviceModel?: string | null;
+    aiAdviceSource?: string | null;
 }
 
 const EMOJIS = ["😄", "🙂", "😐", "😢", "😡", "😴", "🤩"];
@@ -112,7 +117,7 @@ export default function EmotionsPage() {
                 alert("오늘 감정을 기록했어요.");
             }
 
-            // 다시 조회해서 상태 동기화 (AI 결과 포함)
+            // 다시 조회해서 상태 동기화 (AI 결과 + 조언 포함)
             fetchEmotion(date);
         } catch (err: any) {
             console.error("감정 저장 실패:", err?.response?.data || err);
@@ -137,7 +142,7 @@ export default function EmotionsPage() {
             <div className="flex items-center justify-between gap-4">
                 <PageTitle
                     title="감정 기록"
-                    description="하루에 하나의 감정을 이모지로 기록하고, 짧은 메모와 함께 AI 분석 결과도 확인할 수 있어요."
+                    description="하루에 하나의 감정을 이모지로 기록하고, 짧은 메모를 남기면 AI 감정 분석과 조언을 함께 볼 수 있어요."
                 />
 
                 <div className="flex items-center gap-2 text-sm">
@@ -184,8 +189,7 @@ export default function EmotionsPage() {
 
                             {currentEmotion ? (
                                 <p className="mt-1 text-xs text-zinc-500">
-                                    이 날의 감정은 이미 기록되어 있어요. 이모지나 메모를 수정할 수
-                                    있어요.
+                                    이 날의 감정은 이미 기록되어 있어요. 이모지나 메모를 수정할 수 있어요.
                                 </p>
                             ) : (
                                 <p className="mt-1 text-xs text-zinc-500">
@@ -203,7 +207,7 @@ export default function EmotionsPage() {
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
                                 rows={3}
-                                placeholder="오늘의 기분이나 이유를 메모로 남겨보세요. 이 텍스트를 기반으로 AI가 감정을 분석해요."
+                                placeholder="오늘의 기분이나 이유를 메모로 남겨보세요. 이 텍스트를 기반으로 AI가 감정을 분석하고 조언을 제공해요."
                                 className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
@@ -224,8 +228,29 @@ export default function EmotionsPage() {
                                     {formatScore(currentEmotion.negative)}
                                 </p>
                                 <p className="mt-1 text-[11px] text-indigo-600">
-                                    * 작성한 메모 텍스트를 기반으로 한 자동 분석이에요. 실제 기분과
-                                    다를 수도 있어요.
+                                    * 작성한 메모 텍스트를 기반으로 한 자동 분석이에요. 실제 기분과 다를 수도 있어요.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* 🌱 AI 조언 영역 */}
+                        {currentEmotion?.aiAdvice && (
+                            <div className="space-y-1 rounded-md bg-emerald-50 px-3 py-3 text-xs">
+                                <p className="font-medium text-emerald-800">
+                                    오늘을 위한 Growlog 코멘트
+                                </p>
+                                <p className="mt-1 whitespace-pre-line text-emerald-900">
+                                    {currentEmotion.aiAdvice}
+                                </p>
+
+                                {currentEmotion.aiAdviceSource && (
+                                    <p className="mt-1 text-[11px] text-emerald-600">
+                                        출처: {currentEmotion.aiAdviceSource}
+                                    </p>
+                                )}
+
+                                <p className="mt-1 text-[11px] text-emerald-600">
+                                    * AI가 남긴 제안이니, 정답이라기보다는 가볍게 참고용으로만 봐주세요.
                                 </p>
                             </div>
                         )}
