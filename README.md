@@ -101,27 +101,23 @@ AI 분석을 통해 **감정 흐름과 목표 달성률을 시각적으로 확�
 
 ---
 
-## 📂 Project Structure
+## 📁 Project Structure
 
-
+```markdown
+```text
 Growlog_frontend
-│
 ├── app
-│ ├── dashboard
-│ ├── todo
-│ ├── emotion
-│ └── statistics
-│
+│   ├── dashboard
+│   ├── emotion
+│   ├── statistics
+│   └── todo
 ├── components
-│
 ├── hooks
-│
 ├── services
-│
 ├── store
-│
-└── utils
-
+├── utils
+└── images
+```
 
 ---
 
